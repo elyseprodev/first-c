@@ -1,0 +1,39 @@
+name: Auto Commit - Balanced
+
+on:
+  schedule:
+    # Run 3 times daily at 6 AM, 2 PM, and 10 PM
+    - cron: '0 6,14,22 * * *'
+  workflow_dispatch:
+
+jobs:
+  auto_commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Create multiple commits
+        run: |
+          # Random number of commits between 5-15 per run
+          NUM_COMMITS=$((RANDOM % 11 + 5))
+          
+          for i in $(seq 1 $NUM_COMMITS); do
+            # Create unique file names to avoid conflicts
+            FILE_NAME="daily_$(date +%Y%m%d)_run_${{ github.run_number }}_commit_${i}.txt"
+            echo "Auto commit #$i on $(date '+%Y-%m-%d %H:%M:%S')" > "$FILE_NAME"
+            git add "$FILE_NAME"
+            git commit -m "Auto commit ${{ github.run_number }}.#$i - $(date '+%Y-%m-%d %H:%M:%S')"
+            
+            # Small delay to ensure unique timestamps
+            sleep 1
+          done
+
+      - name: Push changes
+        run: git push origin main
