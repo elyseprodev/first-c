@@ -1,0 +1,32 @@
+name: Auto Commit - 300 Commits Daily
+
+on:
+  schedule:
+    # Run 8 times per day (every 3 hours)
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
+
+jobs:
+  auto_commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Make 38 commits in this run (304 total daily)
+        run: |
+          # 8 runs/day × 38 commits/run = 304 commits total
+          for i in {1..38}; do
+            echo "Commit #$i - $(date '+%Y-%m-%d %H:%M:%S') - Run ${{ github.run_number }}" > commit_${i}_$(date +%s).txt
+            git add commit_${i}_*.txt
+            git commit -m "Auto commit #$i - $(date '+%Y-%m-%d %H:%M:%S')"
+          done
+
+      - name: Push changes
+        run: git push origin main
